@@ -54,6 +54,10 @@ Now we can plot :-)
 ggplot(intervalMean, aes(x=interval, y=steps)) + 
   geom_line()
 ```
+No let's find on which interval we have (on average) the maximum number of steps
+```{r average-max-interval}
+intervalMean$interval[intervalMean$steps == max(intervalMean$steps)]
+```
 
 ## Imputing missing values
 First, let's check how many missing values we have, and what percentage of the
@@ -88,7 +92,7 @@ sum(is.na(activity$steps))
 
 Now that we've removed missing values, let's review the daily steps histogram,
 mean, and median.
-```{r daily-steps-2}
+```{r daily-steps-2, message=FALSE}
 dailySteps2 <- activity[!is.na(activity$steps),] %>%
   group_by(date) %>%
   summarise(steps=sum(steps))
@@ -115,7 +119,7 @@ isWeekend <- function(x) {
 activity$daytype <- factor(ifelse(isWeekend(activity$date), "WeekEnd", "WeekDay")) 
 ```
 Next, we need to create a new mean variable grouped by our factor variable:
-```{r group-by-daytype}
+```{r group-by-daytype, message=FALSE}
 meanByType <- activity %>%
   group_by(interval, daytype) %>%
   summarise(steps=mean(steps))

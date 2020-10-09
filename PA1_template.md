@@ -81,6 +81,15 @@ ggplot(intervalMean, aes(x=interval, y=steps)) +
 ```
 
 ![](PA1_template_files/figure-html/plot-daily-pattern-1.png)<!-- -->
+No let's find on which interval we have (on average) the maximum number of steps
+
+```r
+intervalMean$interval[intervalMean$steps == max(intervalMean$steps)]
+```
+
+```
+## [1] 835
+```
 
 ## Imputing missing values
 First, let's check how many missing values we have, and what percentage of the
@@ -138,13 +147,7 @@ mean, and median.
 dailySteps2 <- activity[!is.na(activity$steps),] %>%
   group_by(date) %>%
   summarise(steps=sum(steps))
-```
 
-```
-## `summarise()` ungrouping output (override with `.groups` argument)
-```
-
-```r
 ggplot(dailySteps2, aes(x=date)) + 
   geom_histogram(aes(weight=steps), bins=length(unique(activity$date)))
 ```
@@ -187,10 +190,6 @@ Next, we need to create a new mean variable grouped by our factor variable:
 meanByType <- activity %>%
   group_by(interval, daytype) %>%
   summarise(steps=mean(steps))
-```
-
-```
-## `summarise()` regrouping output by 'interval' (override with `.groups` argument)
 ```
 And now let's see the activity pattern per day type
 
