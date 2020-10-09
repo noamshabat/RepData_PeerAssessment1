@@ -10,23 +10,33 @@ output:
 The data comes in a zipped file, in the current working directory. let's unzip
 it, load it, and see what it looks like.  
 We'll setup the column types to fit the data in the file.
-```{r import-data, cache=TRUE}
+
+```r
 unzip('activity.zip')
 activity <- read.table('activity.csv', header=T, sep=',', colClasses = 
                          c("numeric", "Date", "numeric"))
 str(activity)
 ```
 
+```
+## 'data.frame':	17568 obs. of  3 variables:
+##  $ steps   : num  NA NA NA NA NA NA NA NA NA NA ...
+##  $ date    : Date, format: "2012-10-01" "2012-10-01" ...
+##  $ interval: num  0 5 10 15 20 25 30 35 40 45 ...
+```
+
 
 ## What is mean total number of steps taken per day?
 First let's load the libraries we need to use
-```{r load-library, results='hide', message=FALSE}
+
+```r
 library(ggplot2)
 library(dplyr)
 ```
 
 Now let's see how many daily steps we have.
-```{r plot-daily-steps, message=FALSE}
+
+```r
 dailySteps <- activity[!is.na(activity$steps),] %>%
   group_by(date) %>%
   summarise(steps=sum(steps))
@@ -35,32 +45,61 @@ ggplot(dailySteps, aes(x=date)) +
   geom_histogram(aes(weight=steps), bins=length(unique(activity$date)))
 ```
 
+![](PA1_template_files/figure-html/plot-daily-steps-1.png)<!-- -->
+
 Mean and median daily steps: 
-```{r mean-average-steps} 
+
+```r
 print(paste('Mean:', as.character(mean(dailySteps$steps))))
+```
+
+```
+## [1] "Mean: 10766.1886792453"
+```
+
+```r
 print(paste('Median:', as.character(median(dailySteps$steps))))
-```  
+```
+
+```
+## [1] "Median: 10765"
+```
 
 ## What is the average daily activity pattern?
 First let's re-summarise the data based on intervals.
-```{r summarise-daily-pattern}
+
+```r
 intervalMean <- activity[!is.na(activity$steps),] %>%
   group_by(interval) %>%
   summarise(steps=mean(steps), .groups='drop')
-
 ```
 Now we can plot :-)
-```{r plot-daily-pattern}
+
+```r
 ggplot(intervalMean, aes(x=interval, y=steps)) + 
   geom_line()
 ```
 
+![](PA1_template_files/figure-html/plot-daily-pattern-1.png)<!-- -->
+
 ## Imputing missing values
 First, let's check how many missing values we have, and what percentage of the
 samples it is:
-```{r how-many-missing-values}
+
+```r
 sum(is.na(activity$steps))
+```
+
+```
+## [1] 2304
+```
+
+```r
 mean(is.na(activity$steps))
+```
+
+```
+## [1] 0.1311475
 ```
 
 Now, we need to decide how to fill these missing values with imputed data.  
@@ -71,7 +110,8 @@ the same day than there is across days in the same interval.
 
 We already have the interval mean from the previous plot. let's use it to get  
 the mean values into the na locations
-```{r imputing-na-values}
+
+```r
 activity$steps[is.na(activity$steps)] <- # insert into all NA values
   sapply(activity$interval[is.na(activity$steps)], # select interval of na values
          # return the mean value for each interval.
@@ -82,31 +122,58 @@ activity$steps <- unlist(activity$steps) # unlist after sapply
 Now the values within the `activity` data frame are imputed. let's verify by looking  
 at the number of missing values again (we expect 0)
 
-```{r verify-no-na}
+
+```r
 sum(is.na(activity$steps))
+```
+
+```
+## [1] 0
 ```
 
 Now that we've removed missing values, let's review the daily steps histogram,
 mean, and median.
-```{r daily-steps-2}
+
+```r
 dailySteps2 <- activity[!is.na(activity$steps),] %>%
   group_by(date) %>%
   summarise(steps=sum(steps))
+```
 
+```
+## `summarise()` ungrouping output (override with `.groups` argument)
+```
+
+```r
 ggplot(dailySteps2, aes(x=date)) + 
   geom_histogram(aes(weight=steps), bins=length(unique(activity$date)))
 ```
+
+![](PA1_template_files/figure-html/daily-steps-2-1.png)<!-- -->
 Mean and median daily steps: 
-```{r mean-average-steps-2} 
+
+```r
 print(paste('Mean:', as.character(mean(dailySteps2$steps))))
+```
+
+```
+## [1] "Mean: 10766.1886792453"
+```
+
+```r
 print(paste('Median:', as.character(median(dailySteps2$steps))))
+```
+
+```
+## [1] "Median: 10766.1886792453"
 ```
 Looks like there is a very small difference in the median after completing the na
 values. The mean looks pretty much the same.
 
 ## Are there differences in activity patterns between weekdays and weekends?
 First, let's add a column to every sample that specifies if it is weekday or weekend.
-```{r add-factor-weekday-weekend}
+
+```r
 # function that returns true when weekend.
 isWeekend <- function(x) {
   weekdays(x) %in% c("Sunday", "Saturday")
@@ -115,19 +182,26 @@ isWeekend <- function(x) {
 activity$daytype <- factor(ifelse(isWeekend(activity$date), "WeekEnd", "WeekDay")) 
 ```
 Next, we need to create a new mean variable grouped by our factor variable:
-```{r group-by-daytype}
+
+```r
 meanByType <- activity %>%
   group_by(interval, daytype) %>%
   summarise(steps=mean(steps))
 ```
-And now let's see the activity pattern per day type
-```{r activity-pattern-comparison}
 
+```
+## `summarise()` regrouping output by 'interval' (override with `.groups` argument)
+```
+And now let's see the activity pattern per day type
+
+```r
 ggplot(meanByType, aes(x=interval, y=steps, group=daytype)) + 
        geom_line(color="blue") + 
        facet_grid(rows=vars(daytype)) + 
        geom_hline(yintercept = 100)
 ```
+
+![](PA1_template_files/figure-html/activity-pattern-comparison-1.png)<!-- -->
 
 We can see that on average, weekdays have a higher activity peak in the morning
 (getting ready for work perhaps?), but on weekends - there is more activity spread
